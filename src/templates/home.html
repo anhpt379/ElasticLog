@@ -3,49 +3,61 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Event Aggregator</title>
+    <title>Arl - WebUI</title>
     <meta name="description" content="" />
     <meta name="author" content="anhpt" />
     <link rel="shortcut icon" href="/favicon.ico" />
 <style>
-table {
-  font-family: monospace;
-  font-size: 12px;
-}
+  body {
+    font-family: arial;
+  }
 
-table {
-  width: 100%;
-  white-space: nowrap; 
-  table-layout: fixed;
-}
-th {
-  font-size: 13px;
-  font-weight: normal;
-  color: #333;
-  padding: 10px;
-  border-bottom: 1px solid #999;
-}
-td {
-  color: #555;
-  padding: 5px 10px;
-  border-bottom: 1px solid #E2E2E2;
-  overflow: hidden; 
-  text-overflow: ellipsis
-}
-tbody tr:hover td {
-  color: #333;
-}
+  table {
+    font-family: monospace;
+    font-size: 12px;
+  }
 
-text[text-anchor=end] {
-display: none;
-}  
+  table {
+    width: 100%;
+    white-space: nowrap;
+    table-layout: fixed;
+  }
+
+  th {
+    font-size: 13px;
+    font-weight: normal;
+    color: #333;
+    padding: 10px;
+    border-bottom: 1px solid #999;
+  }
+
+  td {
+    color: #555;
+    padding: 5px 10px;
+    border-bottom: 1px solid #E2E2E2;
+    overflow: hidden;
+    text-overflow: ellipsis
+  }
+
+  tbody tr:hover td {
+    color: #333;
+  }
+
+  text[text-anchor=end] {
+    display: none;
+  }
   
+  #graph {
+    min-width: 400px; 
+    height: 400px; 
+    margin: 0 auto;
+  }
 </style>
   </head>
   <body>
     <div>
       <header>
-        <h1>Event Aggregator</h1>
+        <h2 title='Aggregating Real-time Logs'>Arl</h2>
       </header>
       <nav>
         <form action='/' method='POST'>
@@ -54,9 +66,35 @@ display: none;
           <input type='submit' value='Filter'>
         </form>
       </nav>
-<div id="container" style="min-width: 400px; height: 400px; margin: 0 auto"></div>
-      {% include 'graph.html' %}
-      {% include 'results.html' %}
+      <div id="graph"></div>
+      
+      {% if records %}
+      <table id='records'>
+        <thead>
+          {% for i in records[0].keys() %}
+          <th>{{ i }}</th>
+          {% endfor %}
+        </thead>
+        
+        <tbody>
+          {% if graph_by in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year'] %}
+            {% set records = records[-10:] %}
+          {% else %}
+            {% set records = records[:10] %}
+          {% endif %}
+          
+          {% for record in records %}
+          <tr>
+            {% for key in record.keys() %}
+              <td title='{{ record[key] }}'>{{ record[key] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          
+        </tbody>
+      </table>
+      {% endif %}
+      
       <footer>
       </footer>
     </div>
@@ -72,7 +110,7 @@ display: none;
   $(document).ready(function() {
       chart = new Highcharts.Chart({
           chart: {
-              renderTo: 'container',
+              renderTo: 'graph',
               type: 'spline'
           },
           title: {
@@ -118,7 +156,7 @@ display: none;
   $(document).ready(function() {
 	  chart = new Highcharts.Chart({
 		  chart: {
-			  renderTo: 'container',
+			  renderTo: 'graph',
 			  type: 'column'
 		  },
 		  title: {

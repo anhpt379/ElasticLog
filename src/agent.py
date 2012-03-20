@@ -82,7 +82,7 @@ def parse(message):
   res["time"] = datetime(*tt).isoformat()
   return res
 
-def run(path_to_log_file):
+def watch(path_to_log_file):
   for line in tail_f(path_to_log_file):
     params = parse(line)
     if not params.has_key('time'):
@@ -96,7 +96,7 @@ def run(path_to_log_file):
       
 if __name__ == '__main__':
   NAME = 'web_6.37_apache_accesslog'
-  run('/usr/local/nginx/logs/access.log')
+  watch('/usr/local/nginx/logs/access.log')
   
     
     

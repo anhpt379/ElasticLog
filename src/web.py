@@ -30,52 +30,53 @@ app = Flask(__name__)
 @app.route('/', methods=['GET', 'POST'])
 def main():
   if request.method == 'GET':
-    records = counters = query = graph_by = None
+    query = '*'
+    graph_by = 'hour'
   else:
     query = request.form.get('query', '*')  
     graph_by = request.form.get('graph_by', 'second')
-    key = graph_by
-  
-    query_dsl =  {"query" : {"query_string": {"query" : query}}}
     
-    if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
-      query_dsl['facets'] =  {
-              "counters": { 
-                "date_histogram": {
-                  "field" : "time",  
-                  "interval" : key
-                  } 
-                }
-              }
-    else:
-      query_dsl["facets"] = {
-            "counters" : {
-                "terms" : {
-                    "script_field" : "_source.%s" % key
-                }
+  key = graph_by
+  query_dsl =  {"query" : {"query_string": {"query" : query}}}
+
+  if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
+    query_dsl['facets'] =  {
+            "counters": { 
+              "date_histogram": {
+                "field" : "time",  
+                "interval" : key
+                } 
               }
             }
-      
-    resp = INDEX.search(query=None, body=query_dsl, indexes=['log'])
+  else:
+    query_dsl["facets"] = {
+          "counters" : {
+              "terms" : {
+                  "script_field" : "_source.%s" % key
+              }
+            }
+          }
     
-    results = resp.get('hits').get('hits')
-    records = []
-    for i in results:
-      record = {}
-      for k in i.get('_source').keys():
-        if not k.startswith('_'): 
-          record[k] = i['_source'][k]
-        records.append(record)
-    
-    counters = odict()
-    if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
-      entries = resp.get('facets').get('counters').get('entries')
-      for i in entries:
-        counters[datetime.fromtimestamp(i['time'] / 1000)] = i['count']
+  resp = INDEX.search(query=None, body=query_dsl, indexes=['log'])
+  
+  results = resp.get('hits').get('hits')
+  records = []
+  for i in results:
+    record = {}
+    for k in i.get('_source').keys():
+      if not k.startswith('_'): 
+        record[k] = i['_source'][k]
+      records.append(record)
+  
+  counters = odict()
+  if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
+    entries = resp.get('facets').get('counters').get('entries')
+    for i in entries:
+      counters[datetime.fromtimestamp(i['time'] / 1000)] = i['count']
 
-    else:
-      for i in resp.get('facets').get('counters').get('terms'):
-        counters[i['term']] = i['count']
+  else:
+    for i in resp.get('facets').get('counters').get('terms'):
+      counters[i['term']] = i['count']
     
   return render_template('home.html', 
                          query=query, graph_by=graph_by,
