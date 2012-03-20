@@ -1,0 +1,20 @@
+{% if records %}
+<table id='records'>
+  <thead>
+    {% for i in records[0].keys() %}
+    <th>{{ i }}</th>
+    {% endfor %}
+  </thead>
+  
+  <tbody>
+    {% for record in records[:10] %}
+    <tr>
+      {% for key in record.keys() %}
+        <td title='{{ record[key] }}'>{{ record[key] }}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    
+  </tbody>
+</table>
+{% endif %}
