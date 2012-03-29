@@ -142,7 +142,7 @@
               name: 'Requests per second',
               data: [
                 {% for k in counters.keys() %}
-                  [Date({{ k.year }},  {{ k.month }}, {{ k.day }}, {{ k.hour }}, {{ k.minute }}, {{ k.second }}), {{ counters[k] }}],
+                  [Date.UTC({{ k.year }},  {{ k.month }}, {{ k.day }}, {{ k.hour }}, {{ k.minute }}, {{ k.second }}), {{ counters[k] }}],
                 {% endfor %}
               ]
           }]

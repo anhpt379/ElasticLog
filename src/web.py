@@ -11,13 +11,19 @@
   + Tổng hợp kết quả, vẽ biểu đồ theo thời gian hoặc các tham số đã tách ở bước phân tích
 """
 from flask import Flask, request, render_template, make_response, abort
-from collections import OrderedDict as odict
 from pyelasticsearch import ElasticSearch
 from mimetypes import guess_type
-from datetime import datetime
+from datetime import datetime, timedelta
 from redis import Redis
 import os
 import settings
+
+
+try:
+  from collections import OrderedDict as odict
+except ImportError:
+  from ordereddict import OrderedDict as odict
+
 
 host, port = settings.CACHE.split(':')
 CACHE = Redis(host=host, port=int(port))
@@ -34,6 +40,8 @@ def main():
     graph_by = 'hour'
   else:
     query = request.form.get('query', '*')  
+    if '*' not in query:
+      query = '*' + query + '*'
     graph_by = request.form.get('graph_by', 'second')
     
   key = graph_by
@@ -69,10 +77,11 @@ def main():
       records.append(record)
   
   counters = odict()
+  delta = timedelta(hours=7)  # utc offset
   if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
     entries = resp.get('facets').get('counters').get('entries')
     for i in entries:
-      counters[datetime.fromtimestamp(i['time'] / 1000)] = i['count']
+      counters[datetime.fromtimestamp(i['time'] / 1000) - delta] = i['count']
 
   else:
     for i in resp.get('facets').get('counters').get('terms'):
@@ -99,4 +108,4 @@ def public_files(filename):
   
   
 if __name__ == '__main__':
-  app.run(debug=True)
+  app.run(host='0.0.0.0')
