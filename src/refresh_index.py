@@ -5,7 +5,7 @@ import pyes
 import time
 import settings
 
-INDEX = pyes.ES(settings.ES_SERVER)
+INDEX = pyes.ES(settings.ES_SERVERS)
 
 while True:
   INDEX.refresh()

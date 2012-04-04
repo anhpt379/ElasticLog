@@ -27,7 +27,7 @@ except ImportError:
 
 host, port = settings.CACHE.split(':')
 CACHE = Redis(host=host, port=int(port))
-INDEX = ElasticSearch('http://' + settings.ES_SERVER)
+INDEX = ElasticSearch('http://' + settings.ES_SERVERS[0])
 
 app = Flask(__name__)
 
@@ -37,16 +37,36 @@ app = Flask(__name__)
 def main():
   if request.method == 'GET':
     query = '*'
-    graph_by = 'hour'
+    graph_by = 'minute'
+    start = datetime.strftime(datetime.now() - timedelta(hours=1), '%Y-%m-%dT%H:%M:%S')
+    end = datetime.strftime(datetime.now(), '%Y-%m-%dT%H:%M:%S')
   else:
     query = request.form.get('query', '*')  
     if '*' not in query:
       query = '*' + query + '*'
     graph_by = request.form.get('graph_by', 'second')
+    start = request.form.get('start')
+    end = request.form.get('end')
     
   key = graph_by
-  query_dsl =  {"query" : {"query_string": {"query" : query}}}
+  query_dsl =  {}
 
+  query_dsl['query'] = { 
+          "filtered" : {
+                   "query" : {
+                      "query_string" :  {"query" : query} 
+                   },
+                   "filter" : {
+                      "numeric_range" : {
+                         "time" : {
+                            "lt" : end,
+                            "gte" : start
+                         }
+                      }
+                   }
+                }
+        }
+  
   if key in ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']:
     query_dsl['facets'] =  {
             "counters": { 
@@ -88,6 +108,7 @@ def main():
       counters[i['term']] = i['count']
     
   return render_template('home.html', 
+                         start=start, end=end,
                          query=query, graph_by=graph_by,
                          records=records, counters=counters)
     
@@ -108,4 +129,4 @@ def public_files(filename):
   
   
 if __name__ == '__main__':
-  app.run(host='0.0.0.0')
+  app.run(host='0.0.0.0', debug=False)

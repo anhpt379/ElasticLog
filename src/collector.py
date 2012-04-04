@@ -12,7 +12,7 @@ import settings
 host, port, db = settings.QUEUE.split(':')
 QUEUE = HotQueue("queue", host=host, port=int(port), db=int(db))
 #INDEX = ElasticSearch('http://' + settings.ES_SERVER)
-INDEX = pyes.ES(settings.ES_SERVER)
+INDEX = pyes.ES(settings.ES_SERVERS)
 
 @QUEUE.worker
 def build_index(info):

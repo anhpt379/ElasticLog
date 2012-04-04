@@ -63,6 +63,8 @@
         <form action='/' method='POST'>
           <input type='search' name='query' placeholder="Query" {% if query %}value="{{ query }}"{% endif %}>
           <input type='text' name='graph_by' placeholder="(graph_by)" {% if graph_by %}value="{{ graph_by }}"{% endif %}>
+          <input type='text' name='start' placeholder="(start time)" {% if start %}value="{{ start }}"{% endif %}>
+          <input type='text' name='end' placeholder="(end time)" {% if end %}value="{{ end }}"{% endif %}>
           <input type='submit' value='Filter'>
         </form>
       </nav>
@@ -117,7 +119,7 @@
               text: 'Graph'
           },
           subtitle: {
-              text: 'Requests per second'
+              text: 'Requests per {{ graph_by }}'
           },
           xAxis: {
               type: 'datetime',
@@ -139,10 +141,10 @@
               }
           },
           series: [ {
-              name: 'Requests per second',
+              name: 'Requests per {{ graph_by }}',
               data: [
-                {% for k in counters.keys() %}
-                  [Date.UTC({{ k.year }},  {{ k.month }}, {{ k.day }}, {{ k.hour }}, {{ k.minute }}, {{ k.second }}), {{ counters[k] }}],
+                {% for k in counters.keys() %} {# in javascript months are zero-based-numbered #}
+                  [Date.UTC({{ k.year }},  {{ k.month - 1 }}, {{ k.day }}, {{ k.hour }}, {{ k.minute }}, {{ k.second }}), {{ counters[k] }}],
                 {% endfor %}
               ]
           }]
